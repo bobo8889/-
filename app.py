@@ -1,26 +1,21 @@
-import pyModeS as pms
-from pyModeS.extra.tcpclient import TcpClient
+from socket import socket, AF_INET, SOCK_STREAM
+from signal import signal, SIGINT
+from sys import exit
 
 
-class ADSBClient(TcpClient):
-    def __init__(self, host: str, port: int, rawtype: str):
-        super(ADSBClient, self).__init__(host, port, rawtype)
-
-    def handle_messages(self, messages):
-        for msg, ts in messages:
-            # Wrong data length, not ADSB or CRC failed
-            if len(msg) != 28 or pms.df(msg) != 17 or pms.crc(msg) != 0:
-                continue
-
-            icao = pms.adsb.icao(msg)
-            tc = pms.adsb.typecode(msg)
-            print(ts, icao, tc, msg)
+def graceful_shutdown(socket: socket):
+    socket.close()
+    exit(0)
 
 
 def main():
-    # Create new client with host and port as arguments
-    client = ADSBClient(host='172.17.138.214', port=30002, rawtype='raw')
-    client.run()
+    sock = socket(AF_INET, SOCK_STREAM)
+    sock.connect(("172.17.138.214", 30002))
+    signal(SIGINT, lambda *_: graceful_shutdown(sock))
+
+    while True:
+        buffer = sock.recv(128)
+        print(buffer.decode("utf-8"))
 
 
 if __name__ == '__main__':
