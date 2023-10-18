@@ -1,0 +1,12 @@
+{
+    "server_settings": {
+        "host": "0.0.0.0",
+        "port": 8080,
+        "cors": false,
+        "debug": false
+    },
+    "source_settings": {
+        "host": "172.17.138.214",
+        "port": 30002
+    }
+}
