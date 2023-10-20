@@ -1,6 +1,6 @@
-from utils import hex2bin, bin2int, crc
+from controller.utils import hex2bin, bin2int, crc
 from textwrap import wrap
-from map import DICT_MAP
+from config.mapper import DICT_MAP
 
 
 def main():

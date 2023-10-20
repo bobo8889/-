@@ -1,7 +1,6 @@
 from re import sub
 from typing import Tuple
-
-from utils import crc
+from controller.utils import crc
 
 
 def is_message_valid(msg: str) -> bool:
