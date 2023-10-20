@@ -3,17 +3,17 @@ from datetime import datetime, timezone
 
 
 def set_message(path: str, message: str, data: ResponseData) -> Response:
-    """Generate message
+    """生成响应消息
 
-    This function will generate unified message for the server
+    该函数将为服务器生成统一的响应消息
 
     Args:
-        path (str): Request path
-        message (str): Message text
-        data (ResponseData): Response data
+        path (str): 请求路径
+        message (str): 响应消息
+        data (ResponseData): 响应数据
 
     Returns:
-        Response: Response object
+        Response: 响应对象
     """
     return Response(
         time=datetime.now(tz=timezone.utc).isoformat(

@@ -4,7 +4,7 @@ from model.adsb import ADSBPacket
 from model.router import RouterItem
 
 
-async def socket_handler(ws: WebSocket, _: RouterItem, packet: ADSBPacket) -> None:
+async def socket_handler(ws: WebSocket, _: RouterItem, publisher: Publisher) -> None:
     """Websocket 处理回调
 
     用于处理 Websocket 连接请求，订阅 ADS-B 数据并将数据推送至客户端
@@ -12,7 +12,7 @@ async def socket_handler(ws: WebSocket, _: RouterItem, packet: ADSBPacket) -> No
     Args:
         ws (WebSocket): WebSocket 连接对象，由 FastAPI 自动传入
         router (RouterItem): 路由配置，模型来自 config/routers.py
-        packet (ADSBPacket): ADS-B 报文共享缓冲区，用于送入 Publisher
+        publisher (Publisher): ADS-B 报文发布者，用于订阅 ADS-B 数据
 
     Returns:
         None
@@ -32,7 +32,6 @@ async def socket_handler(ws: WebSocket, _: RouterItem, packet: ADSBPacket) -> No
             await ws.send_json(packet.__dict__)
 
         await ws.accept()
-        publisher = Publisher(packet)
         await publisher.subscribe(subscriber)
     except:
         try:

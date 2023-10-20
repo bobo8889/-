@@ -3,18 +3,18 @@ from datetime import datetime, timezone
 
 
 def set_error(path: str, message: str, status: int, data: ResponseData) -> Response:
-    """Generate error message
+    """生成错误消息
 
-    This function will generate unified error message for the server
+    该函数将为服务器生成统一的错误消息
 
     Args:
-        path (str): Request path
-        message (str): Message text
-        status (int): HTTP status code
-        data (ResponseData): Response data
+        path (str): 请求路径
+        message (str): 错误消息
+        status (int): HTTP 状态码
+        data (ResponseData): 响应数据
 
     Returns:
-        Response: Response object
+        Response: 响应对象
     """
     return Response(
         time=datetime.now(tz=timezone.utc).isoformat(

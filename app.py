@@ -7,6 +7,7 @@ from socket import socket, AF_INET, SOCK_STREAM
 from config.logger import LOGGER_CONFIG
 from config.settings import Settings
 from controller.arguments import Arguments
+from controller.publisher import Publisher
 from controller.server import Server
 from controller.utils import find
 from _thread import start_new_thread
@@ -84,8 +85,9 @@ def main():
     sock.connect((source_host, source_port))
     logger.info(f"Connected to {source_host}:{source_port}")
 
-    # 启动报文解析线程
+    # 启动报文解析线程，创建发布者
     packet = ADSBPacket()
+    publisher = Publisher(packet)
     start_new_thread(adsb_decoder, (sock, packet))
 
     # 创建 HTTP 服务器
@@ -100,7 +102,7 @@ def main():
 
     # 注册 API 路由
     for router in API_ROUTERS:
-        server.route(router, packet)
+        server.route(router, publisher)
 
     # 启动 HTTP 服务器线程
     server.start()
