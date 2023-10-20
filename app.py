@@ -4,16 +4,13 @@ from logging.config import dictConfig
 from config.router import API_ROUTERS
 from controller.adsb import is_crc_valid, is_message_decodable
 from socket import socket, AF_INET, SOCK_STREAM
-from pyModeS.decoder import tell
 from config.logger import LOGGER_CONFIG
 from config.settings import Settings
 from controller.arguments import Arguments
-from typing import Dict, Tuple
 from controller.server import Server
 from controller.utils import find
 from _thread import start_new_thread
 from sys import exit
-
 from model.adsb import ADSBPacket
 
 

@@ -3,7 +3,7 @@ from typing import Callable
 from model.adsb import ADSBPacket
 
 
-class Publisher():
+class Publisher:
     """ADS-B 数据发布者
 
     用于发布 ADS-B 数据至订阅者
