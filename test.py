@@ -1,12 +1,12 @@
 from controller.utils import hex2bin, bin2int, crc
 from textwrap import wrap
-from config.mapper import DICT_MAP
+from controller.utils import DICT_MAPPER
 
 
 def main():
-    message = "80E1969458B542A5CB38B8E14373"
+    # message = "80E1969458B542A5CB38B8E14373"
     # message = "8D780889585302F9694664009FC0"
-    # message = "8D4840D6202CC371C32CE0576098"
+    message = "8D4840D6202CC371C32CE0576098"
     """
     判断长度是否合规
     讯息长度恒定为 112 bits，即 28 个十六进制数
@@ -90,7 +90,7 @@ def main():
         mbytes = list(map(bin2int, msgbin_split))
         result = ""
         for _, v in enumerate(mbytes):
-            result += str(DICT_MAP[v])
+            result += str(DICT_MAPPER[v])
         print(f"Callsign: {result}")
     elif tc >= 5 and tc <= 8:
         # Now we have a ground speed & track angle
