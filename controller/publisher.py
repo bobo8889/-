@@ -1,6 +1,6 @@
 from asyncio import sleep
 from typing import Callable
-from model.adsb import ADSBPacket
+from model.packet import ADSBPacket
 
 
 class Publisher:
@@ -15,11 +15,11 @@ class Publisher:
 
     def __init__(self, packet: ADSBPacket) -> None:
         self.packet = packet
-        self.prev_ts = packet.ts
+        self.prev_ts = packet.timestamp
 
     async def subscribe(self, subscriber: Callable) -> None:
         while True:
-            if self.packet.ts != self.prev_ts:
+            if self.packet.timestamp != self.prev_ts:
                 await subscriber(self.packet)
-                self.prev_ts = self.packet.ts
+                self.prev_ts = self.packet.timestamp
             await sleep(0.05)

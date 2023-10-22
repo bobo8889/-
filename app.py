@@ -2,17 +2,16 @@ from datetime import datetime
 from logging import Logger, getLogger
 from logging.config import dictConfig
 from config.router import API_ROUTERS
-from controller.adsb import is_crc_valid, is_message_decodable
 from socket import socket, AF_INET, SOCK_STREAM
 from config.logger import LOGGER_CONFIG
 from config.settings import Settings
 from controller.arguments import Arguments
 from controller.publisher import Publisher
 from controller.server import Server
-from controller.utils import find
+from controller.decoder import ADSBDecoder, msg_crc, socket_find
 from _thread import start_new_thread
 from sys import exit
-from model.adsb import ADSBPacket
+from model.packet import ADSBPacket
 
 
 def graceful_shutdown(sock: socket, logger: Logger) -> None:
@@ -31,7 +30,7 @@ def graceful_shutdown(sock: socket, logger: Logger) -> None:
     logger.info("TCP connection has been closed")
 
 
-def adsb_decoder(sock: socket, packet: ADSBPacket) -> None:
+def decoder_daemon(sock: socket, packet: ADSBPacket, decoder: ADSBDecoder) -> None:
     """从 Socket 中读取并解析报文
 
     Args:
@@ -43,7 +42,7 @@ def adsb_decoder(sock: socket, packet: ADSBPacket) -> None:
     """
     while True:
         # 取得报文头部 *，长度为 1 字节
-        _, err = find(sock, b"*")
+        _, err = socket_find(sock, b"*")
         if err:
             continue
         # 接收剩余报文内容并检查完整性
@@ -52,15 +51,24 @@ def adsb_decoder(sock: socket, packet: ADSBPacket) -> None:
             continue
         msg = data_recv[:-1].decode("utf-8")
         # 检查 Downlink Format，判断是否可解码
-        df, decodable = is_message_decodable(msg)
+        df = int(msg[:2], 16) >> 3
+        decodable = df == 17 or df == 20 or df == 21
         if not decodable:
             continue
         # Downlink Format 为 17 时需 CRC 校验
-        if df == 17 and not is_crc_valid(msg):
+        _, err = msg_crc(msg)
+        if err and df == 17:
             continue
-        # 赋值报文和时间戳
-        packet.msg = msg
-        packet.ts = int(datetime.now().timestamp() * 1000)
+        # 过滤非 Downlink Format 为 17 的报文
+        if df != 17:
+            continue
+        decoder.set_msg(msg)
+        # 赋值解码后的数据
+        packet.message = msg
+        packet.icao, _ = decoder.get_icao()
+        packet.callsign, _ = decoder.get_callsign()
+        packet.altitude, _ = decoder.get_altitude()
+        packet.timestamp = int(datetime.now().timestamp() * 1000)
 
 
 def main():
@@ -87,8 +95,9 @@ def main():
 
     # 启动报文解析线程，创建发布者
     packet = ADSBPacket()
+    decoder = ADSBDecoder()
     publisher = Publisher(packet)
-    start_new_thread(adsb_decoder, (sock, packet))
+    start_new_thread(decoder_daemon, (sock, packet, decoder))
 
     # 创建 HTTP 服务器
     server_host, server_port = conf.server.host, conf.server.port

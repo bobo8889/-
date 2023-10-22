@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi import FastAPI, HTTPException, Request, WebSocket
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from config.router import API_PREFIX, API_VERSION
+from config.router import API_PREFIX
 from model.router import RouterItem
 from model.error import set_error
 from uvicorn import run
@@ -25,7 +25,7 @@ class Server:
     """
 
     def __init__(self, host: str, port: str, cors=False, debug=False) -> None:
-        debug_url = f"{API_PREFIX}/{API_VERSION}/devel" if debug else None
+        debug_url = f"{API_PREFIX}/devel" if debug else None
         self.app = FastAPI(docs_url=debug_url, redoc_url=debug_url)
         if cors:
             self.app.add_middleware(

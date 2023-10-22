@@ -1,6 +1,6 @@
 from fastapi import WebSocket
 from controller.publisher import Publisher
-from model.adsb import ADSBPacket
+from model.packet import ADSBPacket
 from model.router import RouterItem
 
 
