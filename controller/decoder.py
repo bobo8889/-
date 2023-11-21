@@ -16,9 +16,12 @@ def socket_find(sock: socket, signature: bytes, retry: int = 1) -> Tuple[bytes, 
         Tuple[bytes, bool]: 读取到的数据，读取是否失败
     """
     for _ in range(retry):
-        data = sock.recv(len(signature))
-        if data.startswith(signature):
-            return data, False
+        try:
+            data = sock.recv(len(signature))
+            if data.startswith(signature):
+                return data, False
+        except:
+            return b"", True
 
     return b"", True
 
