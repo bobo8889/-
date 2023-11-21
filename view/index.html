@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="">
+    <head>
+        <meta charset="utf-8" />
+        <title>地图瓦片测试页</title>
+        <link rel="stylesheet" href="./leaflet/leaflet.min.css" />
+        <style>
+            #app {
+                height: 100vh;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="app"></div>
+    </body>
+    <script src="./leaflet/leaflet.min.js"></script>
+    <script type="text/javascript">
+        const coordinates = [29.6, 106.6];
+        // Create & load map
+        const map = L.map("app", {
+            attributionControl: false,
+            center: coordinates,
+            zoom: 5,
+        });
+        // Set map tiles
+        L.tileLayer("./tiles/{z}/{x}/{y}/tile.webp", {
+            minZoom: 3,
+            maxZoom: 7,
+        }).addTo(map);
+        // Create a popup
+        L.popup({
+            autoClose: false,
+            closeButton: false,
+            closeOnClick: false,
+            closeOnEscapeKey: false,
+        })
+            .setLatLng(coordinates)
+            .setContent(`重庆市渝中区解放碑步行街`)
+            .openOn(map);
+    </script>
+</html>

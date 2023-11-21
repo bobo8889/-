@@ -112,6 +112,8 @@ def main():
     # 注册 API 路由
     for router in API_ROUTERS:
         server.route(router, publisher)
+    # 启动地图瓦片服务
+    server.static(path="/", dir="./view")
 
     # 启动 HTTP 服务器线程
     server.start()

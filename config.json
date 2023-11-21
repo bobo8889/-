@@ -6,7 +6,7 @@
         "debug": true
     },
     "source_settings": {
-        "host": "127.0.0.1",
+        "host": "172.17.138.214",
         "port": 30002
     }
 }
