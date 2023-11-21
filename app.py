@@ -88,6 +88,7 @@ def main():
         exit(1)
 
     # 连接报文服务器
+    logger.info("Connecting to ADS-B server...")
     source_host, source_port = conf.source.host, conf.source.port
     sock = socket(AF_INET, SOCK_STREAM)
     sock.connect((source_host, source_port))
