@@ -1,6 +1,7 @@
 from datetime import datetime
 from logging import Logger, getLogger
 from logging.config import dictConfig
+from typing import Tuple
 from config.router import API_ROUTERS
 from socket import socket, AF_INET, SOCK_STREAM
 from config.logger import LOGGER_CONFIG
@@ -71,6 +72,26 @@ def decoder_daemon(sock: socket, packet: ADSBPacket, decoder: ADSBDecoder) -> No
         packet.timestamp = int(datetime.now().timestamp() * 1000)
 
 
+def connect_tcpserver(host: str, port: int, timeout: int) -> Tuple[socket, bool]:
+    """连接 TCP 服务器
+
+    Args:
+        host (str): 服务器地址
+        port (int): 服务器端口
+        timeout (int): 连接超时时间
+
+    Returns:
+        Tuple[socket, bool]: 已连接的 socket 实例，连接是否失败
+    """
+    sock = socket(AF_INET, SOCK_STREAM)
+    sock.settimeout(timeout)
+    try:
+        sock.connect((host, port))
+        return sock, False
+    except:
+        return sock, True
+
+
 def main():
     # 取得全局日志记录器
     dictConfig(LOGGER_CONFIG)
@@ -90,8 +111,13 @@ def main():
     # 连接报文服务器
     logger.info("Connecting to ADS-B server...")
     source_host, source_port = conf.source.host, conf.source.port
-    sock = socket(AF_INET, SOCK_STREAM)
-    sock.connect((source_host, source_port))
+    sock, err = connect_tcpserver(
+        source_host, source_port,
+        conf.source.timeout,
+    )
+    if err:
+        logger.info(f"Failed to connect to {source_host}:{source_port}")
+        exit(1)
     logger.info(f"Connected to {source_host}:{source_port}")
 
     # 启动报文解析线程，创建发布者

@@ -6,6 +6,7 @@ from json import load
 class Source:
     host: str
     port: str
+    timeout: int
 
 
 @dataclass
