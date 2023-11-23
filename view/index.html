@@ -21,12 +21,12 @@
         const map = L.map("app", {
             attributionControl: false,
             center: coordinates,
-            zoom: 5,
+            zoom: 7,
         });
         // Set map tiles
         L.tileLayer("./tiles/{z}/{x}/{y}/tile.webp", {
-            minZoom: 3,
-            maxZoom: 7,
+            minZoom: 7,
+            maxZoom: 11,
         }).addTo(map);
         // Create a popup
         L.popup({
