@@ -2,10 +2,10 @@ from datetime import datetime
 from logging import Logger, getLogger
 from logging.config import dictConfig
 from typing import Tuple
-from config.router import API_ROUTERS
+from settings.router import API_ROUTERS
 from socket import socket, AF_INET, SOCK_STREAM
-from config.logger import LOGGER_CONFIG
-from config.settings import Settings
+from settings.logger import LOGGER_CONFIG
+from settings.settings import Settings
 from controller.arguments import Arguments
 from controller.publisher import Publisher
 from controller.server import Server

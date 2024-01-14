@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi import FastAPI, HTTPException, Request, WebSocket
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from config.router import API_PREFIX
+from settings.router import API_PREFIX
 from model.router import RouterItem
 from model.error import set_error
 from uvicorn import run
