@@ -92,18 +92,6 @@ class ADSBDecoder:
             return PLACEHOLDER_STRING
         return self.msg[2:8]
 
-    def get_squawk(self) -> str:
-        """取得应答机编码
-
-        取得应答机编码，若解码失败，返回的应答机编码为 PLACEHOLDER_STRING
-
-        Returns:
-            str: 应答机编码
-        """
-        if self.tc == 5 or self.tc == 21:
-            return pms.idcode(self.msg)
-        return PLACEHOLDER_STRING
-
     def get_callsign(self) -> str:
         """取得呼号
 
@@ -140,6 +128,20 @@ class ADSBDecoder:
         if hd is None:
             return PLACEHOLDER_NUMBER
         return hd
+
+    def get_velocity(self) -> float:
+        """取得速度
+
+        取得速度，若解码失败，返回的速度为 PLACEHOLDER_NUMBER
+
+        Returns:
+            float: 速度
+        """
+        if self.tc == 19:
+            v = pms.adsb.velocity(self.msg)[0]
+            if v is not None:
+                return v
+        return PLACEHOLDER_NUMBER
 
     def get_position(self) -> Tuple[float, float]:
         """取得位置

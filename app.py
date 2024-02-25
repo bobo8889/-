@@ -79,9 +79,9 @@ def decoder_daemon(sock: socket, decoder: ADSBDecoder, packet: ADSBPacket) -> No
         # 解析报文
         packet.icao = decoder.get_icao()
         packet.callsign = decoder.get_callsign()
-        packet.squawk = decoder.get_squawk()
         packet.altitude = decoder.get_altitude()
         packet.heading = decoder.get_heading()
+        packet.velocity = decoder.get_velocity()
         packet.latitude, packet.longitude = decoder.get_position()
         # 为数据打上时标
         packet.message = decoder.msg
