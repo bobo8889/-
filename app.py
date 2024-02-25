@@ -9,7 +9,7 @@ from settings.settings import Settings
 from controller.arguments import Arguments
 from controller.publisher import Publisher
 from controller.server import Server
-from controller.decoder import ADSBDecoder, msg_crc, socket_find
+from controller.decoder import ADSBDecoder
 from _thread import start_new_thread
 from sys import exit
 from model.packet import ADSBPacket
@@ -31,7 +31,29 @@ def graceful_shutdown(sock: socket, logger: Logger) -> None:
     logger.info("TCP connection has been closed")
 
 
-def decoder_daemon(sock: socket, packet: ADSBPacket, decoder: ADSBDecoder) -> None:
+def socket_find(sock: socket, signature: bytes, retry: int = 1) -> Tuple[bytes, bool]:
+    """从 socket 中读取数据，直到读取到指定的数据
+
+    Args:
+        sock (socket): 创建好的 socket 实例
+        signature (bytes): 指定的数据
+        retry (int): 重试次数
+
+    Returns:
+        Tuple[bytes, bool]: 读取到的数据，读取是否失败
+    """
+    for _ in range(retry):
+        try:
+            data = sock.recv(len(signature))
+            if data.startswith(signature):
+                return data, False
+        except:
+            return b"", True
+
+    return b"", True
+
+
+def decoder_daemon(sock: socket, decoder: ADSBDecoder, packet: ADSBPacket) -> None:
     """从 Socket 中读取并解析报文
 
     Args:
@@ -50,26 +72,22 @@ def decoder_daemon(sock: socket, packet: ADSBPacket, decoder: ADSBDecoder) -> No
         data_recv = sock.recv(29)
         if data_recv[-1:] != b";":
             continue
-        msg = data_recv[:-1].decode("utf-8")
-        # 检查 Downlink Format，判断是否可解码
-        df = int(msg[:2], 16) >> 3
-        decodable = df == 17 or df == 20 or df == 21
-        if not decodable:
-            continue
-        # Downlink Format 为 17 时需 CRC 校验
-        _, err = msg_crc(msg)
-        if err and df == 17:
-            continue
-        # 过滤非 Downlink Format 为 17 的报文
-        if df != 17:
-            continue
-        decoder.set_msg(msg)
-        # 赋值解码后的数据
-        packet.message = msg
-        packet.icao, _ = decoder.get_icao()
-        packet.callsign, _ = decoder.get_callsign()
-        packet.altitude, _ = decoder.get_altitude()
-        packet.timestamp = int(datetime.now().timestamp() * 1000)
+        # 设定报文
+        decoder.msg = data_recv[:-1].decode("utf-8")
+        decoder.parse_typecode()
+        decoder.parse_timestamp()
+        # 解析报文
+        packet.icao = decoder.get_icao()
+        packet.callsign = decoder.get_callsign()
+        packet.squawk = decoder.get_squawk()
+        packet.altitude = decoder.get_altitude()
+        packet.heading = decoder.get_heading()
+        packet.latitude, packet.longitude = decoder.get_position()
+        # 为数据打上时标
+        packet.message = decoder.msg
+        packet.timestamp = decoder.ts
+        # 收尾工作
+        decoder.update_buffer()
 
 
 def connect_tcpserver(host: str, port: int, timeout: int) -> Tuple[socket, bool]:
@@ -121,10 +139,9 @@ def main():
     logger.info(f"Connected to {source_host}:{source_port}")
 
     # 启动报文解析线程，创建发布者
-    packet = ADSBPacket()
     decoder = ADSBDecoder()
-    publisher = Publisher(packet)
-    start_new_thread(decoder_daemon, (sock, packet, decoder))
+    packet = ADSBPacket()
+    start_new_thread(decoder_daemon, (sock, decoder, packet))
 
     # 创建 HTTP 服务器
     server_host, server_port = conf.server.host, conf.server.port
@@ -137,6 +154,7 @@ def main():
     server.on("shutdown", lambda: graceful_shutdown(sock, logger))
 
     # 注册 API 路由
+    publisher = Publisher(packet)
     for router in API_ROUTERS:
         server.route(router, publisher)
     # 启动地图瓦片服务
