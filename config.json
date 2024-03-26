@@ -5,6 +5,14 @@
         "cors": true,
         "debug": true
     },
+    "database_settings": {
+        "host": "",
+        "port": "",
+        "username": "",
+        "password": "",
+        "engine": "sqlite",
+        "database": "/home/yuki/adsb.db"
+    },
     "source_settings": {
         "host": "127.0.0.1",
         "port": 30002,

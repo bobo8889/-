@@ -22,4 +22,4 @@ class Publisher:
             if self.packet.timestamp != self.prev_ts:
                 await subscriber(self.packet)
                 self.prev_ts = self.packet.timestamp
-            await sleep(0.05)
+            await sleep(0.01)

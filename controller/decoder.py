@@ -1,6 +1,10 @@
 from datetime import datetime
+from time import sleep
 from typing import List, Tuple
+from controller.database import Database
 import library as pms
+from model.database.records import Records
+from _thread import start_new_thread
 
 TIMEUNIT_SECOND = 1000
 BUFFER_TIMEOUT = 10*TIMEUNIT_SECOND
@@ -35,12 +39,58 @@ class ADSBDecoder:
     ts: int
     msg: str
 
+    archiving_enabled = True
+
+    queue: List[ADSBDecoderBuffer] = []
     buffer: List[ADSBDecoderBuffer] = []
+
+    def __init__(self, db: Database = None) -> None:
+        if db is not None:
+            self.archiving_thread = start_new_thread(self.__update_database__, (db,))
+
+    def __del__(self):
+        self.archiving_enabled = False
+
+    def __update_database__(self, db: Database) -> None:
+        """数据库更新线程
+
+        扫描存档队列，将队列中的报文存入数据库
+
+        Args:
+            db (Database): _description_
+        """
+        while self.archiving_enabled:
+            if len(self.queue) > 0:
+                record = Records().set_attrs({
+                    "timestamp": self.queue[0].timestamp,
+                    "message": self.queue[0].message,
+                    "typecode": self.queue[0].typecode,
+                    "icao": self.queue[0].icao,
+                })
+                self.queue.pop(0)
+                db.insert(record)
+            sleep(0.1)
+
+    def update_queue(self):
+        """更新数据库存档队列
+
+        将当前报文加入数据库存档队列
+
+        Returns:
+            None
+        """
+        self.queue.append(ADSBDecoderBuffer(
+            icao=self.get_icao(),
+            message=self.msg,
+            typecode=self.tc,
+            timestamp=self.ts,
+        ))
 
     def update_buffer(self):
         """更新缓冲区
 
-        将当前报文加入缓冲区，若缓冲区时间戳超时，将超时报文移除
+        将当前报文加入缓冲区并更新数据库
+        若缓冲区时间戳超时，将超时报文移除
 
         Returns:
             List[ADSBDecoderBuffer]: 缓冲区

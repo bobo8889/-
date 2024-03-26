@@ -10,6 +10,16 @@ class Source:
 
 
 @dataclass
+class Database:
+    host: str
+    port: str
+    engine: str
+    database: str
+    username: str
+    password: str
+
+
+@dataclass
 class Server:
     host: str
     port: str
@@ -30,6 +40,7 @@ class Settings:
 
     source: Source = None
     server: Server = None
+    database: Database = None
 
     def parse(self, path: str) -> bool:
         """打开并解析配置文件
@@ -49,6 +60,9 @@ class Settings:
             )
             self.server = Server(
                 **config_data.get("server_settings")
+            )
+            self.database = Database(
+                **config_data.get("database_settings")
             )
             return False
         except:

@@ -78,13 +78,13 @@ class Server:
                 router, response_model=model["response"],  summary=summary,
                 description=description, dependencies=dependencies, tags=tags,
             )
-            def _(req: model["request"] = None):
+            def _(req: model["request"] = None): # type: ignore
                 return handler(req, conf, *args)
         else:
             @method_mapping[method](
                 router, dependencies=dependencies,
             )
-            async def _(ws: model["request"] = WebSocket):
+            async def _(ws: model["request"] = WebSocket): # type: ignore
                 return await handler(ws, conf, *args)
 
     def on(self, event: str, callback: Callable) -> None:

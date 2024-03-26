@@ -1,10 +1,11 @@
 from fastapi import WebSocket
+from controller.database import Database
 from controller.publisher import Publisher
 from model.packet import ADSBPacket
 from model.router import RouterItem
 
 
-async def socket_handler(ws: WebSocket, _: RouterItem, publisher: Publisher) -> None:
+async def socket_handler(ws: WebSocket, __router__: RouterItem, __database__: Database, publisher: Publisher) -> None:
     """Websocket 处理回调
 
     用于处理 Websocket 连接请求，订阅 ADS-B 数据并将数据推送至客户端
@@ -30,7 +31,6 @@ async def socket_handler(ws: WebSocket, _: RouterItem, publisher: Publisher) -> 
                 None
             """
             await ws.send_json(packet.__dict__)
-
         await ws.accept()
         await publisher.subscribe(subscriber)
     except:

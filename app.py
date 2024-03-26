@@ -1,7 +1,8 @@
-from datetime import datetime
 from logging import Logger, getLogger
 from logging.config import dictConfig
 from typing import Tuple
+from controller.database import Database
+from model.database.records import Records
 from settings.router import API_ROUTERS
 from socket import socket, AF_INET, SOCK_STREAM
 from settings.logger import LOGGER_CONFIG
@@ -53,7 +54,7 @@ def socket_find(sock: socket, signature: bytes, retry: int = 1) -> Tuple[bytes, 
     return b"", True
 
 
-def decoder_daemon(sock: socket, decoder: ADSBDecoder, packet: ADSBPacket) -> None:
+def decoder_daemon(db: Database, sock: socket, decoder: ADSBDecoder, packet: ADSBPacket) -> None:
     """从 Socket 中读取并解析报文
 
     Args:
@@ -88,6 +89,7 @@ def decoder_daemon(sock: socket, decoder: ADSBDecoder, packet: ADSBPacket) -> No
         packet.timestamp = decoder.ts
         # 收尾工作
         decoder.update_buffer()
+        decoder.update_queue()
 
 
 def connect_tcpserver(host: str, port: int, timeout: int) -> Tuple[socket, bool]:
@@ -126,6 +128,25 @@ def main():
         logger.info("Failed to parse config")
         exit(1)
 
+    # Connect to database
+    db = Database(
+        engine=conf.database.engine,
+        db_name=conf.database.database,
+        username=conf.database.username,
+        password=conf.database.password,
+        host=conf.database.host,
+        port=conf.database.port,
+        tables=[Records],
+    )
+    err = db.connect()
+    if err:
+        logger.info("Failed to connect to database")
+        return
+
+    # Migrating database
+    logger.info("Migrating database")
+    db.migrate()
+
     # 连接报文服务器
     logger.info("Connecting to ADS-B server...")
     source_host, source_port = conf.source.host, conf.source.port
@@ -139,9 +160,9 @@ def main():
     logger.info(f"Connected to {source_host}:{source_port}")
 
     # 启动报文解析线程，创建发布者
-    decoder = ADSBDecoder()
+    decoder = ADSBDecoder(db)
     packet = ADSBPacket()
-    start_new_thread(decoder_daemon, (sock, decoder, packet))
+    start_new_thread(decoder_daemon, (db, sock, decoder, packet,))
 
     # 创建 HTTP 服务器
     server_host, server_port = conf.server.host, conf.server.port
@@ -156,7 +177,7 @@ def main():
     # 注册 API 路由
     publisher = Publisher(packet)
     for router in API_ROUTERS:
-        server.route(router, publisher)
+        server.route(router, db, publisher)
     # 启动地图瓦片服务
     server.static(path="/", dir="./view")
 
